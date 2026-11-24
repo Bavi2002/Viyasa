@@ -82,10 +82,10 @@ fun PlaygroundCard(
             "she having many works to complete today"
         )
         AssistantTask.TRANSLATE -> listOf(
-            "Bonjour mon ami, comment ça va aujourd'hui?",
-            "Hola, ¿puedes ayudarme con este proyecto?",
-            "Guten Morgen! Wir treffen uns um zehn Uhr.",
-            "நீங்கள் எப்படி இருக்கிறீர்கள்?"
+            "Good morning! How are you today?",
+            "Thank you very much for your kind help.",
+            "I will arrive at the office tomorrow morning.",
+            "Can you please send me the meeting notes?"
         )
         AssistantTask.SUMMARIZE -> listOf(
             "Artificial intelligence models are rapidly shrinking in size while preserving conversational and grammatical quality. On-device execution ensures that sensitive personal messages never leave the user's phone, giving complete privacy without subscription fees.",
@@ -165,7 +165,7 @@ fun PlaygroundCard(
                             )
                         }
                         Text(
-                            text = "Vyasa operates 100% locally on your phone for maximum privacy. Download Gemma 3 (272 MB) or Qwen3 (343 MB) in Settings to begin.",
+                            text = "Viyasa operates 100% locally on your phone for maximum privacy. Download Gemma 3 (272 MB) or Qwen3 (343 MB) in Settings to begin.",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -283,20 +283,11 @@ fun PlaygroundCard(
             when (selectedTask) {
                 AssistantTask.TRANSLATE -> {
                     Spacer(modifier = Modifier.height(6.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = "Translates to $translateTarget (configured in Settings)",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (activeModelOption == ModelOption.GEMMA3_270M) {
-                            Text(
-                                text = "Note: Gemma 3 is optimized for English tasks. Qwen3 is recommended for multilingual translation.",
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                    Text(
+                        text = "Translates to $translateTarget (configured in Settings)",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 AssistantTask.SUMMARIZE -> {
                     Spacer(modifier = Modifier.height(6.dp))
@@ -451,7 +442,7 @@ fun PlaygroundCard(
                             IconButton(
                                 onClick = {
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("Vyasa Output", res.fixedText))
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Viyasa Output", res.fixedText))
                                     Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
                                 },
                                 modifier = Modifier.size(24.dp)

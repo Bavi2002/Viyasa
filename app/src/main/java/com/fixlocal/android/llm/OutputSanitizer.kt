@@ -136,10 +136,16 @@ object OutputSanitizer {
         if (text.length < 4) return text
 
         // 1. Remove consecutively repeated words/tokens (e.g. "बात बात बात" -> "बात")
-        text = Regex("""(\b\S+\b)(?:\s+\1){2,}""", RegexOption.IGNORE_CASE).replace(text, "$1")
+        try {
+            text = Regex("""(^|\s+)(\S+)(?:\s+\2){2,}""").replace(text) { mr ->
+                "${mr.groupValues[1]}${mr.groupValues[2]}"
+            }
+        } catch (_: Throwable) {}
 
-        // 2. Remove sub-token repetitions without spaces (e.g. Indic ligature looping >= 3 times)
-        text = Regex("""(.{2,20}?)\1{3,}""").replace(text, "$1")
+        // 2. Remove sub-token repetitions without spaces (e.g. ligature looping >= 4 times)
+        try {
+            text = Regex("""(.{3,20}?)\1{3,}""").replace(text, "$1")
+        } catch (_: Throwable) {}
 
         // 3. Deduplicate repeating sentences
         text = deduplicateSentences(text)

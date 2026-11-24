@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!--
+        Viyasa Header Logo (In-App Vector)
+        Scales crisply to any size. Dual-tone facets create subtle 3D lighting.
+    -->
+
+    <!-- Left Tine -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 31,31 L 42,31 L 52.9,48.68 A 3.5,3.5 0 0,0 52.9,55.32 L 52.9,78.5 L 53.6,80 L 38,52 Z" />
+
+    <!-- Right Tine -->
+    <path
+        android:fillColor="#D8D8DF"
+        android:pathData="M 77,31 L 66,31 L 55.1,48.68 A 3.5,3.5 0 0,1 55.1,55.32 L 55.1,78.5 L 54.4,80 L 70,52 Z" />
+
+</vector>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Vyasa</string>
+    <string name="app_name">Viyasa</string>
     <string name="process_text_label">Rewrite</string>
-    <string name="vyasa_dock_label">Vyasa</string>
+    <string name="vyasa_dock_label">Viyasa</string>
 </resources>

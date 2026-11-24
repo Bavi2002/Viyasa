@@ -70,8 +70,6 @@ fun SettingsAndGuideCard(
     onDefaultSummarizeFormatChanged: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var showGuide by remember { mutableStateOf(false) }
-
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -417,76 +415,6 @@ fun SettingsAndGuideCard(
                                 checkedTrackColor = MaterialTheme.colorScheme.primary
                             )
                         )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Guide for WhatsApp / System Integration
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showGuide = !showGuide }
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "How to use in WhatsApp & other apps",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-
-                            Icon(
-                                imageVector = if (showGuide) Icons.Outlined.ExpandMore else Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        AnimatedVisibility(visible = showGuide) {
-                            Column(
-                                modifier = Modifier.padding(top = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "1. Highlight any text inside WhatsApp, Gmail, or any text editor.",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "2. Select 'Rewrite' to fix and replace text in-place instantly (0 extra taps).",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "3. Select 'Vyasa' to open the floating tool dock (Translate, Summarize, Continue, Tone) without leaving your app.",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
                     }
                 }
             }

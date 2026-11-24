@@ -120,12 +120,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val (capable, _) = isModelCapable(option)
         if (capable) {
             _selectedModelOption.value = option
+            // Synchronously refresh status on main thread to avoid download button flicker/glitch
+            downloadManager.refreshStatus(option)
             viewModelScope.launch {
                 preferencesManager.setSelectedModel(option)
                 if (option == ModelOption.GEMMA3_270M) {
                     preferencesManager.setBackend(InferenceBackend.CPU)
                 }
-                downloadManager.refreshStatus(option)
             }
         }
     }

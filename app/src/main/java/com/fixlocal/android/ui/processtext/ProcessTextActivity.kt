@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,10 +65,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.fixlocal.android.R
 import com.fixlocal.android.data.downloader.ModelDownloadManager
 import com.fixlocal.android.data.model.AssistantTask
 import com.fixlocal.android.data.model.FixResult
@@ -176,6 +179,10 @@ class ProcessTextActivity : ComponentActivity() {
                                         originalText = rawInput
                                     )
                                 } else {
+                                    // Copy to clipboard as universal fallback for apps (like Gmail RichText/WebView) that drop ACTION_PROCESS_TEXT
+                                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("Viyasa Output", result.fixedText))
+
                                     val returnIntent = Intent().apply {
                                         putExtra(Intent.EXTRA_PROCESS_TEXT, result.fixedText)
                                     }
@@ -211,6 +218,10 @@ class ProcessTextActivity : ComponentActivity() {
                         finish()
                     },
                     onReplace = { textToReplace ->
+                        // Copy to clipboard as universal fallback for apps (like Gmail RichText/WebView) that drop ACTION_PROCESS_TEXT
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Viyasa Output", textToReplace))
+
                         val returnIntent = Intent().apply {
                             putExtra(Intent.EXTRA_PROCESS_TEXT, textToReplace)
                         }
@@ -220,7 +231,7 @@ class ProcessTextActivity : ComponentActivity() {
                     },
                     onCopy = { textToCopy ->
                         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("Vyasa Output", textToCopy))
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Viyasa Output", textToCopy))
                         Toast.makeText(this@ProcessTextActivity, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
                         finish()
                     }
@@ -422,24 +433,25 @@ private fun VyasaFloatingDock(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.size(28.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Outlined.AutoFixHigh,
+                                painter = painterResource(id = R.drawable.ic_viyasa_logo),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                     Text(
-                        text = "Vyasa Assistant",
+                        text = "Viyasa Assistant",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -648,44 +660,71 @@ private fun VyasaFloatingDock(
             if (!isRunning && resultText.isNotBlank()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (!isReadOnly) {
                         Button(
                             onClick = { onReplace(resultText) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp),
                             shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Replace Text", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Replace",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
 
                     OutlinedButton(
                         onClick = { onCopy(resultText) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(46.dp),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Copy", fontSize = 13.sp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Copy",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -796,7 +835,7 @@ private fun ModelNotDownloadedSheet(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Vyasa needs an on-device AI model (e.g. Gemma 3 270M or Qwen 0.6B) to rewrite text offline. Open the app to download it.",
+                    text = "Viyasa needs an on-device AI model (e.g. Gemma 3 270M or Qwen 0.6B) to rewrite text offline. Open the app to download it.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -834,7 +873,7 @@ private fun ModelNotDownloadedSheet(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Open Vyasa")
+                        Text("Open Viyasa")
                     }
                 }
             }
@@ -871,12 +910,19 @@ private fun ReadOnlyResultSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Rewritten Text",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Column {
+                        Text(
+                            text = "Rewritten Text",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Source is read-only. Ready to copy or paste into your reply.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
                     IconButton(onClick = onDismiss) {
                         Icon(

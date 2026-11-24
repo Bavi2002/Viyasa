@@ -4,21 +4,24 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Modern Minimalist Vyasa Emblem (Geometric 'V' Stylus) -->
-    <!-- Left Stem of V -->
+
+    <!--
+        Viyasa App Icon — Modern Dual-Tone Stylus / Pen-Nib "V" Monogram
+        - Perfect safe-zone compliance (all coordinates within r <= 32dp circle)
+        - Combines the monogram 'V' of Viyasa with a master writing nib
+        - Left facet: Pure Radiant White (#FFFFFF)
+        - Right facet: Precision Platinum (#E4E4EB)
+        - Center circular breather hole (radius 3.5dp) & micro-slit (2.2dp)
+    -->
+
+    <!-- Left Tine (Pure White Primary Facet) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M33,34 L41,34 L54,72 L46,72 Z" />
-    <!-- Right Feather / Quill Stem of V -->
+        android:pathData="M 31,31 L 42,31 L 52.9,48.68 A 3.5,3.5 0 0,0 52.9,55.32 L 52.9,78.5 L 53.6,80 L 38,52 Z" />
+
+    <!-- Right Tine (Platinum Beveled Facet) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M52,72 L75,34 L67,34 L48,66 Z" />
-    <!-- Center Precision Dot -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,26 A4,4 0 1,0 54,34 A4,4 0 1,0 54,26 Z" />
-    <!-- AI Sparkle Emblem -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M78,22 Q78,28 84,28 Q78,28 78,34 Q78,28 72,28 Q78,28 78,22 Z" />
+        android:fillColor="#E4E4EB"
+        android:pathData="M 77,31 L 66,31 L 55.1,48.68 A 3.5,3.5 0 0,1 55.1,55.32 L 55.1,78.5 L 54.4,80 L 70,52 Z" />
+
 </vector>

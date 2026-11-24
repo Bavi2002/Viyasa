@@ -364,39 +364,28 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
             }
 
             val startTime = System.currentTimeMillis()
-
-            // Multilingual Routing:
-            // Gemma 3 (270M-IT) is an English task specialist without multilingual pre-training.
-            // If Qwen 0.6B is available on the device, automatically route translation to Qwen.
-            val effectiveModelFile = if (modelFile.name.contains("gemma", ignoreCase = true)) {
-                val qwenFile = ModelDownloadManager(context, CoroutineScope(Dispatchers.IO))
-                    .findExistingModelFile(ModelOption.QWEN3_0_6B_Q4)
-                if (qwenFile != null) {
-                    Log.i(TAG, "Gemma 3 is English-focused. Auto-routing translation to Qwen 0.6B.")
-                    qwenFile
-                } else {
-                    modelFile
-                }
-            } else {
-                modelFile
-            }
-
-            // If only Gemma 3 is available and user requests translation to a non-English language:
-            if (effectiveModelFile.name.contains("gemma", ignoreCase = true) && !targetLanguage.equals("English", ignoreCase = true)) {
-                return@withContext FixResult(
-                    originalText = rawText,
-                    fixedText = "Gemma 3 (270M) is an English task specialist. For multilingual translation into $targetLanguage, please download and switch to Qwen3 (0.6B) in Settings.",
-                    latencyMs = System.currentTimeMillis() - startTime,
-                    memoryUsageMb = getApproximateMemoryUsageMb()
-                )
-            }
+            val effectiveModelFile = modelFile
 
             val loadedEngine = ensureEngineLoaded(effectiveModelFile, backend)
 
-            val systemPrompt = "You are an expert multilingual translator. Translate the text into $targetLanguage accurately, preserving tone and context. Write in the native script of $targetLanguage (e.g. Devanagari for Hindi). Do not repeat words or phrases. Output ONLY the translated sentence. Never add quotes or conversational chatter."
-            val userPrompt = "Translate the following text into $targetLanguage:\n$trimmedInput"
+            val targetLangLower = targetLanguage.trim().lowercase()
+            val systemPrompt = when (targetLangLower) {
+                "tamil" -> "You are a professional English to Tamil translator. Translate accurately into natural, correct Tamil script (தமிழ்). Example: 'Good morning' -> 'காலை வணக்கம்', 'How are you?' -> 'நீங்கள் எப்படி இருக்கிறீர்கள்?'. Output ONLY the Tamil translation without any other text."
+                "hindi" -> "You are a professional English to Hindi translator. Translate accurately into natural, correct Hindi in Devanagari script (हिन्दी). Example: 'Good morning' -> 'शुभ प्रभात', 'How are you?' -> 'आप कैसे हैं?'. Output ONLY the Hindi translation without any other text."
+                "telugu" -> "You are a professional English to Telugu translator. Translate accurately into natural Telugu script (తెలుగు). Example: 'Good morning' -> 'శుభోదయం', 'How are you?' -> 'మీరు ఎలా ఉన్నారు?'. Output ONLY the Telugu translation without any other text."
+                "spanish" -> "You are a professional translator. Translate accurately into natural Spanish (Español). Example: 'Good morning' -> 'Buenos días'. Output ONLY the Spanish translation without quotes or chatter."
+                "french" -> "You are a professional translator. Translate accurately into natural French (Français). Example: 'Good morning' -> 'Bonjour'. Output ONLY the French translation without quotes or chatter."
+                "german" -> "You are a professional translator. Translate accurately into natural German (Deutsch). Example: 'Good morning' -> 'Guten Morgen'. Output ONLY the German translation without quotes or chatter."
+                "italian" -> "You are a professional translator. Translate accurately into natural Italian (Italiano). Example: 'Good morning' -> 'Buongiorno'. Output ONLY the Italian translation without quotes or chatter."
+                "portuguese" -> "You are a professional translator. Translate accurately into natural Portuguese (Português). Example: 'Good morning' -> 'Bom dia'. Output ONLY the Portuguese translation without quotes or chatter."
+                "japanese" -> "You are a professional translator. Translate accurately into natural Japanese (日本語). Example: 'Good morning' -> 'おはようございます'. Output ONLY the Japanese translation without quotes or chatter."
+                "chinese" -> "You are a professional translator. Translate accurately into natural Simplified Chinese (中文). Example: 'Good morning' -> '早上好'. Output ONLY the Chinese translation without quotes or chatter."
+                "arabic" -> "You are a professional translator. Translate accurately into natural Arabic (العربية). Example: 'Good morning' -> 'صباح الخير'. Output ONLY the Arabic translation without quotes or chatter."
+                else -> "You are a professional translator. Translate the text into $targetLanguage accurately, preserving original tone and meaning. Output ONLY the translation without quotes or chatter."
+            }
+            val userPrompt = "Translate the following text:\n\"$trimmedInput\"\n\nTranslation:"
 
-            val samplerConfig = SamplerConfig(topK = 40, topP = 0.85, temperature = 0.2, seed = 42)
+            val samplerConfig = SamplerConfig(topK = 1, topP = 0.95, temperature = 0.0, seed = 42)
             val maxTokens = 192
 
             val conversationConfig = try {

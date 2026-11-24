@@ -273,7 +273,7 @@ fun FeaturesCard(
                 }
 
                 Text(
-                    text = "Vyasa integrates directly with the Android text selection popup in WhatsApp, Gmail, Chrome, Slack, and Notes.",
+                    text = "Viyasa integrates directly with the Android text selection popup in WhatsApp, Gmail, Chrome, Slack, and Notes.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -309,13 +309,13 @@ fun FeaturesCard(
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "2. Look for 'Rewrite' or 'Vyasa'",
+                            text = "2. Look for 'Rewrite' or 'Viyasa'",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "• Rewrite: 1-tap instant proofreading that replaces your text in-place with zero lag.\n• Vyasa: Opens the interactive dock to Translate, Summarize, or Continue Writing.",
+                            text = "• Rewrite: 1-tap instant proofreading that replaces your text in-place with zero lag.\n• Viyasa: Opens the interactive dock to Translate, Summarize, or Continue Writing.",
                             fontSize = 11.sp,
                             lineHeight = 16.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -323,11 +323,11 @@ fun FeaturesCard(
                     }
                 }
 
-                // Step 3 (Crucial Setup Tip: Manage Apps)
+                // Step 3 (Manage Apps setup instructions)
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -335,13 +335,13 @@ fun FeaturesCard(
                             text = "3. Don't see them? Enable in 'Manage Apps'",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "If Rewrite or Vyasa is not shown in the first bar:\n• Tap the 3 vertical dots (⋮) on the text popup toolbar.\n• Scroll down and tap 'Manage apps' or 'Customize'.\n• Turn ON / pin 'Rewrite' and 'Vyasa' so they always appear immediately on top.",
+                            text = "If Rewrite or Viyasa is not shown in the first bar:\n• Tap the 3 vertical dots (⋮) on the text popup toolbar.\n• Scroll down and tap 'Manage apps' or 'Customize'.\n• Turn ON / pin 'Rewrite' and 'Viyasa' so they always appear immediately on top.",
                             fontSize = 11.sp,
                             lineHeight = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
