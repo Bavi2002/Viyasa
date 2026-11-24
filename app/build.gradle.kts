@@ -22,6 +22,15 @@ android {
         }
     }
 
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     signingConfigs {
         create("release") {
             val keystoreFile = file("../release.jks")
