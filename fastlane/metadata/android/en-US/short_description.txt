@@ -1,0 +1,1 @@
+Private on-device AI assistant to rewrite, translate, and summarize text offline.

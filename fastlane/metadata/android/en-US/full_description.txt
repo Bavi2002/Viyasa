@@ -1,0 +1,9 @@
+Viyasa is a privacy-first, on-device AI writing assistant for Android.
+
+Key Features:
+- Rewrite: Instant proofreading and grammatical refinement with Natural, Casual, and Professional tones.
+- Translate: On-device multilingual translation across 9 languages without sending data to cloud servers.
+- Summarize: Generate bullet points or executive summaries directly from selected text.
+- Continue Writing: Seamlessly complete thoughts and extend drafts in your personal voice.
+- System Integration: Works inside any app via Android's text selection menu without switching applications.
+- 100% Local: Runs locally using Google LiteRT-LM and quantized models (Gemma 3 and Qwen 3). Zero telemetry, zero tracking.

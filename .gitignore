@@ -57,6 +57,7 @@ Thumbs.db
 # Keystores & sensitive signing credentials
 *.jks
 *.keystore
+keystore.properties
 
 # Python artifacts
 __pycache__/
