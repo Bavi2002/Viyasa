@@ -370,9 +370,6 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
 
             val targetLangLower = targetLanguage.trim().lowercase()
             val systemPrompt = when (targetLangLower) {
-                "tamil" -> "You are a professional English to Tamil translator. Translate accurately into natural, correct Tamil script (தமிழ்). Example: 'Good morning' -> 'காலை வணக்கம்', 'How are you?' -> 'நீங்கள் எப்படி இருக்கிறீர்கள்?'. Output ONLY the Tamil translation without any other text."
-                "hindi" -> "You are a professional English to Hindi translator. Translate accurately into natural, correct Hindi in Devanagari script (हिन्दी). Example: 'Good morning' -> 'शुभ प्रभात', 'How are you?' -> 'आप कैसे हैं?'. Output ONLY the Hindi translation without any other text."
-                "telugu" -> "You are a professional English to Telugu translator. Translate accurately into natural Telugu script (తెలుగు). Example: 'Good morning' -> 'శుభోదయం', 'How are you?' -> 'మీరు ఎలా ఉన్నారు?'. Output ONLY the Telugu translation without any other text."
                 "spanish" -> "You are a professional translator. Translate accurately into natural Spanish (Español). Example: 'Good morning' -> 'Buenos días'. Output ONLY the Spanish translation without quotes or chatter."
                 "french" -> "You are a professional translator. Translate accurately into natural French (Français). Example: 'Good morning' -> 'Bonjour'. Output ONLY the French translation without quotes or chatter."
                 "german" -> "You are a professional translator. Translate accurately into natural German (Deutsch). Example: 'Good morning' -> 'Guten Morgen'. Output ONLY the German translation without quotes or chatter."

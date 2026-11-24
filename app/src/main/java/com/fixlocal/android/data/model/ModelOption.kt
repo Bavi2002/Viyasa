@@ -25,7 +25,7 @@ enum class ModelOption(
         downloadUrl = "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm",
         sizeText = "343 MB",
         expectedSizeBytes = 343490560L,
-        description = "Recommended Multilingual • All Features + Translation (Hindi, Tamil, Global)"
+        description = "Recommended Multilingual • All Features + Translation (Global Languages)"
     );
 
     companion object {

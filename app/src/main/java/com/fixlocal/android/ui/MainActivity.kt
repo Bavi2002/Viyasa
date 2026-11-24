@@ -1,5 +1,7 @@
 package com.fixlocal.android.ui
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -26,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Devices
@@ -70,6 +73,7 @@ import com.fixlocal.android.ui.components.FeaturesCard
 import com.fixlocal.android.ui.components.ModelStatusCard
 import com.fixlocal.android.ui.components.PlaygroundCard
 import com.fixlocal.android.ui.components.SettingsAndGuideCard
+import com.fixlocal.android.ui.components.SupportCard
 import com.fixlocal.android.ui.theme.FixLocalTheme
 import java.util.Locale
 import androidx.compose.ui.res.painterResource
@@ -254,6 +258,25 @@ class MainActivity : ComponentActivity() {
                                             onDismissRequest = { showMenu = false }
                                         ) {
                                             DropdownMenuItem(
+                                                text = { Text("Support on Ko-fi") },
+                                                leadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Default.LocalCafe,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFF72A4F2),
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showMenu = false
+                                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/I7H42B846I")).apply {
+                                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                                    }
+                                                    startActivity(intent)
+                                                }
+                                            )
+
+                                            DropdownMenuItem(
                                                 text = { Text("Sideload Model (.litertlm)") },
                                                 leadingIcon = {
                                                     Icon(
@@ -315,6 +338,8 @@ class MainActivity : ComponentActivity() {
                                             onNavigateToSettings = { selectedTab = MainNavTab.SETTINGS },
                                             onTestFixClick = { viewModel.testFix() }
                                         )
+
+                                        SupportCard()
 
                                         Spacer(modifier = Modifier.height(100.dp))
                                     }

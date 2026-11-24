@@ -63,7 +63,12 @@ class PreferencesManager(private val context: Context) {
     }
 
     val defaultTranslateTargetFlow: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[KEY_TRANSLATE_TARGET] ?: "English"
+        val saved = preferences[KEY_TRANSLATE_TARGET] ?: "Spanish"
+        if (saved.equals("Tamil", ignoreCase = true) || saved.equals("Hindi", ignoreCase = true)) {
+            "Spanish"
+        } else {
+            saved
+        }
     }
 
     suspend fun setDefaultTranslateTarget(language: String) {

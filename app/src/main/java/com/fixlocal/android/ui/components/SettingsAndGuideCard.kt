@@ -127,7 +127,7 @@ fun SettingsAndGuideCard(
                     ) {
                         listOf(
                             "English", "Spanish", "French", "German",
-                            "Italian", "Portuguese", "Hindi", "Tamil", "Arabic", "Japanese", "Chinese"
+                            "Italian", "Portuguese", "Arabic", "Japanese", "Chinese"
                         ).forEach { lang ->
                             val isSelected = defaultTranslateTarget.equals(lang, ignoreCase = true)
                             Surface(
@@ -152,7 +152,7 @@ fun SettingsAndGuideCard(
 
                     if (selectedModelOption == ModelOption.GEMMA3_270M) {
                         Text(
-                            text = "Note: Gemma 3 is optimized for English tasks. For multilingual translations (Hindi, Tamil, European), switch to Qwen3 in the Model Engine card.",
+                            text = "Note: Gemma 3 is optimized for English tasks. For multilingual translations (Spanish, French, etc.), switch to Qwen3 in the Model Engine card.",
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 2.dp)

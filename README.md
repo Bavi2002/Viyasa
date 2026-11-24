@@ -18,7 +18,7 @@
 ### 2. Vyasa Floating Tool Dock (`Vyasa`)
 - Tap **Vyasa** in the text selection menu to open an overlay tool dock without leaving your current app:
   - **Rewrite**: Adjust phrasing tone (*Natural*, *Casual*, *Professional*, or *Custom instructions*).
-  - **Translate**: Translate between languages (*English, Spanish, French, German, Hindi, Tamil, Arabic*) completely offline.
+  - **Translate**: Translate between languages (*English, Spanish, French, German, Italian, Portuguese, Arabic, Japanese, Chinese*) completely offline.
   - **Summarize**: Condense text into concise bullet points or single executive takeaway.
   - **Continue Writing**: Natural co-writer continuation in the same voice and style.
 
