@@ -1,4 +1,4 @@
-# Vyasa (व्यॉस) — On-Device AI Writing Assistant
+# Vyasa — On-Device AI Writing Assistant
 
 [![Android](https://img.shields.io/badge/Platform-Android_14%2F15-green?logo=android)](https://developer.android.com/)
 [![Runtime](https://img.shields.io/badge/Runtime-Google_LiteRT--LM-blue?logo=google)](https://ai.google.dev/edge/litert)
