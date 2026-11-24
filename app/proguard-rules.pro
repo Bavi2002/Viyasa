@@ -1,0 +1,3 @@
+# Proguard rules for LiteRT-LM
+-keep class com.google.ai.edge.litertlm.** { *; }
+-dontwarn com.google.ai.edge.litertlm.**

@@ -1,0 +1,59 @@
+# Built application files and packages
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated and build directories
+build/
+app/build/
+bin/
+gen/
+out/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Gradle files and caches
+.gradle/
+.kotlin/
+
+# Local configuration file (contains SDK paths)
+local.properties
+
+# Android Studio and IntelliJ IDEA
+*.iml
+.idea/
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Large model files and weights (downloaded on-device at runtime)
+*.litertlm
+*.tflite
+*.bin
+*.onnx
+*.safetensors
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# Keystores & sensitive signing credentials
+*.jks
+*.keystore

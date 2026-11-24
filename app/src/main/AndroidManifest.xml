@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".FixLocalApplication"
+        android:allowBackup="true"
+        android:largeHeap="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FixLocal">
+
+        <!-- Native library declarations for GPU acceleration support -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libGLESv3.so"
+            android:required="false" />
+
+        <!-- Main Configuration & Playground Activity -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- System Text-Selection Action Activity (Direct Instant Rewrite) -->
+        <activity
+            android:name=".ui.processtext.ProcessTextActivity"
+            android:label="@string/process_text_label"
+            android:theme="@style/Theme.FixLocal.Dialog"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="stateUnchanged">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- System Text-Selection Action: Vyasa Floating Assistant Dock -->
+        <activity-alias
+            android:name=".ui.processtext.VyasaDockActivity"
+            android:targetActivity=".ui.processtext.ProcessTextActivity"
+            android:label="@string/vyasa_dock_label"
+            android:theme="@style/Theme.FixLocal.Dialog"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Automated Requirement Test Runner Receiver -->
+        <receiver
+            android:name=".ui.TestInferenceReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.fixlocal.android.TEST_TASK" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
