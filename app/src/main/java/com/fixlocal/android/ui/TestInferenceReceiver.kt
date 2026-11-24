@@ -83,7 +83,8 @@ class TestInferenceReceiver : BroadcastReceiver() {
                     }
                 }
 
-                Log.i(TAG, "TEST_RESULT: task=$task | backend=$backend | input='$input' | output='${result.fixedText}' | latency=${result.latencyMs}ms")
+                val encodedOutput = result.fixedText.replace("\r", "").replace("\n", "\\n")
+                Log.i(TAG, "TEST_RESULT: task=$task | backend=$backend | input='$input' | output='$encodedOutput' | latency=${result.latencyMs}ms")
             } catch (t: Throwable) {
                 Log.e(TAG, "TEST_ERROR: task=$taskName | error=${t.message}", t)
             } finally {

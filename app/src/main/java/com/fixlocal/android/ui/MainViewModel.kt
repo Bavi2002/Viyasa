@@ -112,6 +112,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return deviceCapabilityManager.checkModelCapability(option, deviceSpecs)
     }
 
+    fun isModelDownloaded(option: ModelOption): Boolean {
+        return downloadManager.isModelDownloaded(option)
+    }
+
     fun selectModelOption(option: ModelOption) {
         val (capable, _) = isModelCapable(option)
         if (capable) {
@@ -121,6 +125,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (option == ModelOption.GEMMA3_270M) {
                     preferencesManager.setBackend(InferenceBackend.CPU)
                 }
+                downloadManager.refreshStatus(option)
             }
         }
     }
@@ -167,12 +172,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         downloadManager.cancelDownload()
     }
 
-    fun deleteModel() {
-        downloadManager.deleteModel()
+    fun deleteModel(option: ModelOption = _selectedModelOption.value) {
+        downloadManager.deleteModel(option)
     }
 
     fun refreshModelStatus() {
-        downloadManager.refreshStatus()
+        downloadManager.refreshStatus(_selectedModelOption.value)
     }
 
     fun importModel(uri: Uri) {

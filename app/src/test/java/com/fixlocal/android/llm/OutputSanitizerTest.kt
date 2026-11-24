@@ -162,6 +162,27 @@ class OutputSanitizerTest {
     }
 
     @Test
+    fun testRemoveRepetitiveWordLoops() {
+        val input = "बात बात बात बात करें।"
+        val cleaned = OutputSanitizer.removeRepetitiveLoops(input)
+        assertEquals("बात करें।", cleaned)
+    }
+
+    @Test
+    fun testRemoveSubTokenLoops() {
+        val input = "திர்த்திர்த்திர்த்திர்த்"
+        val cleaned = OutputSanitizer.removeRepetitiveLoops(input)
+        assertEquals("திர்த்", cleaned)
+    }
+
+    @Test
+    fun testUnwrapJsonTranslation() {
+        val input = """{"translation": "Bonjour tout le monde!"}"""
+        val unwrapped = OutputSanitizer.unwrapJsonIfPresent(input)
+        assertEquals("Bonjour tout le monde!", unwrapped)
+    }
+
+    @Test
     fun testStripTrailingHallucinatedExamples() {
         val input = """
             Yesterday we were playing cricket in the rain.

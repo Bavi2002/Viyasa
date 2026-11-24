@@ -23,18 +23,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoFixHigh
-import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.outlined.AutoFixHigh
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -64,6 +66,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.fixlocal.android.data.model.ModelStatus
+import com.fixlocal.android.llm.LlmEngineManager
 import com.fixlocal.android.ui.components.FeaturesCard
 import com.fixlocal.android.ui.components.ModelStatusCard
 import com.fixlocal.android.ui.components.PlaygroundCard
@@ -76,8 +80,8 @@ enum class MainNavTab(
     val icon: ImageVector,
     val selectedIcon: ImageVector
 ) {
-    PLAYGROUND("Playground", Icons.Outlined.AutoFixHigh, Icons.Filled.AutoFixHigh),
-    FEATURES("Features", Icons.Outlined.Extension, Icons.Filled.Extension),
+    PLAYGROUND("Playground", Icons.Outlined.EditNote, Icons.Filled.EditNote),
+    FEATURES("Features", Icons.Outlined.Widgets, Icons.Filled.Widgets),
     SETTINGS("Settings", Icons.Outlined.Tune, Icons.Filled.Tune)
 }
 
@@ -97,6 +101,8 @@ class MainActivity : ComponentActivity() {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_RESUME) {
                             viewModel.refreshModelStatus()
+                        } else if (event == Lifecycle.Event.ON_STOP) {
+                            LlmEngineManager.getInstance(applicationContext).onAppBackgrounded()
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
@@ -121,6 +127,7 @@ class MainActivity : ComponentActivity() {
 
                 var selectedTab by rememberSaveable { mutableStateOf(MainNavTab.PLAYGROUND) }
                 var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+                var modelToDelete by remember { mutableStateOf<com.fixlocal.android.data.model.ModelOption?>(null) }
                 var showDeviceSpecsDialog by remember { mutableStateOf(false) }
                 var showMenu by remember { mutableStateOf(false) }
 
@@ -157,10 +164,10 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Icon(
-                                                imageVector = Icons.Filled.AutoFixHigh,
+                                                imageVector = Icons.Outlined.AutoAwesome,
                                                 contentDescription = null,
                                                 tint = MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier.size(19.dp)
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
@@ -243,21 +250,6 @@ class MainActivity : ComponentActivity() {
                                             onDismissRequest = { showMenu = false }
                                         ) {
                                             DropdownMenuItem(
-                                                text = { Text("Device Hardware Specs") },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        imageVector = Icons.Outlined.Devices,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
-                                                },
-                                                onClick = {
-                                                    showMenu = false
-                                                    showDeviceSpecsDialog = true
-                                                }
-                                            )
-
-                                            DropdownMenuItem(
                                                 text = { Text("Sideload Model (.litertlm)") },
                                                 leadingIcon = {
                                                     Icon(
@@ -282,58 +274,44 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     bottomBar = {
-                        Surface(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .navigationBarsPadding(),
-                            color = MaterialTheme.colorScheme.background,
-                            tonalElevation = 0.dp
+                                .navigationBarsPadding()
+                                .padding(bottom = 12.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column {
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                    thickness = 1.dp
-                                )
+                            Surface(
+                                shape = RoundedCornerShape(28.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                shadowElevation = 8.dp,
+                                modifier = Modifier
+                                    .width(260.dp)
+                                    .height(56.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     MainNavTab.entries.forEach { tab ->
                                         val selected = selectedTab == tab
                                         Surface(
                                             onClick = { selectedTab = tab },
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                                            shape = CircleShape,
+                                            color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
                                             contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            border = BorderStroke(
-                                                1.dp,
-                                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-                                            ),
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(46.dp)
+                                            modifier = Modifier.size(42.dp)
                                         ) {
-                                            Row(
-                                                modifier = Modifier.fillMaxSize(),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
+                                            Box(contentAlignment = Alignment.Center) {
                                                 Icon(
                                                     imageVector = if (selected) tab.selectedIcon else tab.icon,
                                                     contentDescription = tab.label,
-                                                    modifier = Modifier.size(18.dp),
+                                                    modifier = Modifier.size(22.dp),
                                                     tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = tab.label,
-                                                    fontSize = 13.sp,
-                                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                                    letterSpacing = 0.2.sp,
-                                                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
                                         }
@@ -366,10 +344,13 @@ class MainActivity : ComponentActivity() {
                                         summarizeFormat = playgroundState.summarizeFormat,
                                         result = playgroundState.result,
                                         errorMessage = playgroundState.errorMessage,
+                                        isModelReady = (modelStatus is ModelStatus.Ready),
+                                        activeModelOption = selectedModelOption,
                                         onInputChanged = { viewModel.onInputTextChanged(it) },
                                         onTaskSelected = { viewModel.setPlaygroundTask(it) },
                                         onTranslateTargetChanged = { viewModel.setPlaygroundTranslateTarget(it) },
                                         onSummarizeFormatChanged = { viewModel.setPlaygroundSummarizeFormat(it) },
+                                        onNavigateToSettings = { selectedTab = MainNavTab.SETTINGS },
                                         onTestFixClick = { viewModel.testFix() }
                                     )
 
@@ -386,8 +367,7 @@ class MainActivity : ComponentActivity() {
                                         defaultSummarizeFormat = defaultSummarizeFormat,
                                         onTranslateEnabledChanged = { viewModel.setTranslateEnabled(it) },
                                         onSummarizeEnabledChanged = { viewModel.setSummarizeEnabled(it) },
-                                        onContinueWritingEnabledChanged = { viewModel.setContinueWritingEnabled(it) },
-                                        onDefaultSummarizeFormatChanged = { viewModel.setDefaultSummarizeFormat(it) }
+                                        onContinueWritingEnabledChanged = { viewModel.setContinueWritingEnabled(it) }
                                     )
                                 }
                             }
@@ -404,9 +384,13 @@ class MainActivity : ComponentActivity() {
                                         onOptionSelected = { viewModel.selectModelOption(it) },
                                         deviceSpecs = viewModel.deviceSpecs,
                                         isModelCapable = { viewModel.isModelCapable(it) },
+                                        isModelDownloaded = { viewModel.isModelDownloaded(it) },
                                         onDownloadClick = { viewModel.startDownload() },
                                         onCancelDownloadClick = { viewModel.cancelDownload() },
-                                        onDeleteClick = { showDeleteConfirmDialog = true }
+                                        onDeleteClick = { optionToDelete ->
+                                            modelToDelete = optionToDelete
+                                            showDeleteConfirmDialog = true
+                                        }
                                     )
 
                                     SettingsAndGuideCard(
@@ -417,12 +401,14 @@ class MainActivity : ComponentActivity() {
                                         selectedBackend = selectedBackend,
                                         deviceSpecs = viewModel.deviceSpecs,
                                         defaultTranslateTarget = defaultTranslateTarget,
+                                        defaultSummarizeFormat = defaultSummarizeFormat,
                                         selectedModelOption = selectedModelOption,
                                         onToneSelected = { viewModel.setTone(it) },
                                         onCustomInstructionChanged = { viewModel.setCustomInstruction(it) },
                                         onWordLimitChanged = { enabled, limit -> viewModel.setWordLimit(enabled, limit) },
                                         onBackendSelected = { viewModel.setBackend(it) },
-                                        onDefaultTranslateTargetChanged = { viewModel.setDefaultTranslateTarget(it) }
+                                        onDefaultTranslateTargetChanged = { viewModel.setDefaultTranslateTarget(it) },
+                                        onDefaultSummarizeFormatChanged = { viewModel.setDefaultSummarizeFormat(it) }
                                     )
 
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -434,17 +420,18 @@ class MainActivity : ComponentActivity() {
 
                 // Delete Confirmation Dialog (Strict Monochrome)
                 if (showDeleteConfirmDialog) {
+                    val targetName = modelToDelete?.displayName ?: selectedModelOption.displayName
                     AlertDialog(
                         onDismissRequest = { showDeleteConfirmDialog = false },
                         title = { Text("Delete On-Device Model?") },
                         text = {
-                            Text("This will remove the downloaded AI model from local storage.")
+                            Text("This will remove $targetName from local storage. Other models will remain available.")
                         },
                         confirmButton = {
                             TextButton(
                                 onClick = {
                                     showDeleteConfirmDialog = false
-                                    viewModel.deleteModel()
+                                    modelToDelete?.let { viewModel.deleteModel(it) } ?: viewModel.deleteModel()
                                 },
                                 colors = ButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.onSurface

@@ -3,9 +3,11 @@ package com.fixlocal.android.llm
 import android.content.Context
 import android.os.Debug
 import android.util.Log
+import com.fixlocal.android.data.downloader.ModelDownloadManager
 import com.fixlocal.android.data.model.FixResult
 import com.fixlocal.android.data.model.FixTone
 import com.fixlocal.android.data.model.InferenceBackend
+import com.fixlocal.android.data.model.ModelOption
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
@@ -15,7 +17,13 @@ import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.ThinkingConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -55,6 +63,49 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
     private var loadedModelPath: String? = null
     private var loadedBackend: InferenceBackend? = null
     private var isClosed = false
+
+    private val idleScope = CoroutineScope(Dispatchers.Default)
+    private var idleJob: Job? = null
+
+    /**
+     * Resets the 60-second inactivity auto-sleep timer.
+     * When idle for 60 seconds, native engine RAM is unloaded so the phone remains cool and light.
+     */
+    private fun resetIdleTimer() {
+        idleJob?.cancel()
+        idleJob = idleScope.launch {
+            delay(60_000L)
+            Log.i(TAG, "Inactivity timeout reached (60s). Unloading LLM engine to free RAM.")
+            unloadEngine()
+        }
+    }
+
+    /**
+     * Unloads the LiteRT-LM engine from memory and triggers garbage collection to free native RAM.
+     */
+    suspend fun unloadEngine() = withContext(dispatcher) {
+        mutex.withLock {
+            try {
+                engine?.close()
+            } catch (t: Throwable) {
+                Log.w(TAG, "Error closing engine on unload: ${t.message}")
+            }
+            engine = null
+            loadedModelPath = null
+            loadedBackend = null
+            System.gc()
+            Log.i(TAG, "LLM Engine unloaded and RAM freed.")
+        }
+    }
+
+    /**
+     * Called when the app transitions to the background to release native RAM immediately.
+     */
+    fun onAppBackgrounded() {
+        idleScope.launch {
+            unloadEngine()
+        }
+    }
 
     private fun getApproximateMemoryUsageMb(): Double {
         return try {
@@ -284,6 +335,8 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
             val finalOutput = if (sanitized.isNotBlank()) sanitized else trimmedInput
             val memoryMb = getApproximateMemoryUsageMb()
 
+            resetIdleTimer()
+
             Log.i(TAG, "fixGrammar: input='$rawText' | rawOutput='$rawOutput' | final='$finalOutput' | ${latency}ms")
 
             FixResult(
@@ -311,12 +364,39 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
             }
 
             val startTime = System.currentTimeMillis()
-            val loadedEngine = ensureEngineLoaded(modelFile, backend)
 
-            val systemPrompt = "You are an expert multilingual translator. Translate the user text into $targetLanguage accurately, preserving tone and context. Output ONLY the direct translated text. Do not add quotes, introductory tags, or explanations."
+            // Multilingual Routing:
+            // Gemma 3 (270M-IT) is an English task specialist without multilingual pre-training.
+            // If Qwen 0.6B is available on the device, automatically route translation to Qwen.
+            val effectiveModelFile = if (modelFile.name.contains("gemma", ignoreCase = true)) {
+                val qwenFile = ModelDownloadManager(context, CoroutineScope(Dispatchers.IO))
+                    .findExistingModelFile(ModelOption.QWEN3_0_6B_Q4)
+                if (qwenFile != null) {
+                    Log.i(TAG, "Gemma 3 is English-focused. Auto-routing translation to Qwen 0.6B.")
+                    qwenFile
+                } else {
+                    modelFile
+                }
+            } else {
+                modelFile
+            }
+
+            // If only Gemma 3 is available and user requests translation to a non-English language:
+            if (effectiveModelFile.name.contains("gemma", ignoreCase = true) && !targetLanguage.equals("English", ignoreCase = true)) {
+                return@withContext FixResult(
+                    originalText = rawText,
+                    fixedText = "Gemma 3 (270M) is an English task specialist. For multilingual translation into $targetLanguage, please download and switch to Qwen3 (0.6B) in Settings.",
+                    latencyMs = System.currentTimeMillis() - startTime,
+                    memoryUsageMb = getApproximateMemoryUsageMb()
+                )
+            }
+
+            val loadedEngine = ensureEngineLoaded(effectiveModelFile, backend)
+
+            val systemPrompt = "You are an expert multilingual translator. Translate the text into $targetLanguage accurately, preserving tone and context. Write in the native script of $targetLanguage (e.g. Devanagari for Hindi). Do not repeat words or phrases. Output ONLY the translated sentence. Never add quotes or conversational chatter."
             val userPrompt = "Translate the following text into $targetLanguage:\n$trimmedInput"
 
-            val samplerConfig = SamplerConfig(topK = 20, topP = 0.9, temperature = 0.1, seed = 0)
+            val samplerConfig = SamplerConfig(topK = 40, topP = 0.85, temperature = 0.2, seed = 42)
             val maxTokens = 192
 
             val conversationConfig = try {
@@ -362,12 +442,15 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
             val latency = System.currentTimeMillis() - startTime
             var cleanText = OutputSanitizer.stripSpecialTokens(rawOutput.toString())
             cleanText = OutputSanitizer.unwrapJsonIfPresent(cleanText).trim()
+            cleanText = OutputSanitizer.removeRepetitiveLoops(cleanText)
             // Clean common prefixes small models might generate
             cleanText = cleanText.replace(Regex("^(Translation|Here is the translation|Translated text|In $targetLanguage):\\s*", RegexOption.IGNORE_CASE), "")
             if (cleanText.startsWith("\"") && cleanText.endsWith("\"") && cleanText.length > 2) {
                 cleanText = cleanText.substring(1, cleanText.length - 1).trim()
             }
             val finalOutput = if (cleanText.isNotBlank()) cleanText else trimmedInput
+
+            resetIdleTimer()
 
             Log.i(TAG, "translateText: input='$trimmedInput' | target='$targetLanguage' | rawOutput='$rawOutput' | final='$finalOutput' | ${latency}ms")
 
@@ -400,14 +483,18 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
 
             val isBullets = format.contains("Bullet", ignoreCase = true)
             val systemPrompt = if (isBullets) {
-                "You are an executive summarizer. Condense the text into 2 or 3 concise bullet points. Each bullet must start with '• '. Output ONLY the bullet points without introductions or conclusions."
+                "You are an executive summarizer. Condense the text into 2 concise bullet points. Each bullet must start with '• '. Output ONLY the bullet points without introductions or conclusions."
             } else {
                 "You are an executive summarizer. Condense the essence of the text into exactly one concise sentence. Output ONLY the single summary sentence without quotes or preambles."
             }
-            val userPrompt = "Summarize this text:\n$trimmedInput"
+            val userPrompt = if (isBullets) {
+                "Provide 2 brief bullet points summarizing this text:\n$trimmedInput"
+            } else {
+                "Summarize this text into one sentence:\n$trimmedInput"
+            }
 
             val samplerConfig = SamplerConfig(topK = 20, topP = 0.9, temperature = 0.1, seed = 0)
-            val maxTokens = 160
+            val maxTokens = if (isBullets) 80 else 64
 
             val conversationConfig = try {
                 ConversationConfig(
@@ -457,6 +544,8 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
                 cleanText = cleanText.substring(1, cleanText.length - 1).trim()
             }
             val finalOutput = if (cleanText.isNotBlank()) cleanText else trimmedInput
+
+            resetIdleTimer()
 
             Log.i(TAG, "summarizeText: input='$trimmedInput' | format='$format' | rawOutput='$rawOutput' | final='$finalOutput' | ${latency}ms")
 
@@ -561,6 +650,8 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
                 trimmedInput
             }
 
+            resetIdleTimer()
+
             Log.i(TAG, "continueWriting: input='$trimmedInput' | rawOutput='$rawOutput' | continuation='$continuation' | final='$combined' | ${latency}ms")
 
             FixResult(
@@ -575,6 +666,8 @@ class LlmEngineManager private constructor(private val context: Context) : AutoC
     override fun close() {
         if (isClosed) return
         isClosed = true
+        idleJob?.cancel()
+        idleScope.cancel()
         try {
             engine?.close()
         } catch (_: Throwable) {}

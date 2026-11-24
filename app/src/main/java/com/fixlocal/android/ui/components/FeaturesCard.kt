@@ -39,7 +39,6 @@ fun FeaturesCard(
     onTranslateEnabledChanged: (Boolean) -> Unit,
     onSummarizeEnabledChanged: (Boolean) -> Unit,
     onContinueWritingEnabledChanged: (Boolean) -> Unit,
-    onDefaultSummarizeFormatChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -93,36 +92,19 @@ fun FeaturesCard(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Rewrite",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "On-device grammar, spelling & phrasing proofreader",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        ) {
-                            Text(
-                                text = "Core • Active",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Rewrite",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "On-device grammar, spelling & phrasing proofreader (Always active in Android text selection)",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
@@ -210,29 +192,12 @@ fun FeaturesCard(
                         }
 
                         if (isSummarizeEnabled) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                listOf("Bullets", "One-Liner").forEach { fmt ->
-                                    val isFmtSelected = defaultSummarizeFormat == fmt
-                                    Surface(
-                                        onClick = { onDefaultSummarizeFormatChanged(fmt) },
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = if (isFmtSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                                        contentColor = if (isFmtSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
-                                    ) {
-                                        Text(
-                                            text = fmt,
-                                            fontSize = 10.sp,
-                                            fontWeight = if (isFmtSelected) FontWeight.Bold else FontWeight.Normal,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                        )
-                                    }
-                                }
-                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Format: $defaultSummarizeFormat (configured in Settings)",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -275,7 +240,7 @@ fun FeaturesCard(
             }
         }
 
-        // Card 2: Floating Dock & Process Text Integration
+        // Card 2: Setup & Usage Guide (Android Text Menu & Floating Dock)
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -287,7 +252,7 @@ fun FeaturesCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -300,7 +265,7 @@ fun FeaturesCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Cross-App Floating Dock",
+                        text = "How to Use in Any App",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -308,11 +273,78 @@ fun FeaturesCard(
                 }
 
                 Text(
-                    text = "When you select text in WhatsApp, Gmail, or Chrome, you will see two menu options:\n\n• Rewrite: Automatically fixes and replaces the text directly in 1 tap without opening any dialog.\n• Vyasa: Opens the floating tool dock over the app where you can switch tasks (Translate, Summarize, Continue, Tone) without leaving your app.",
+                    text = "Vyasa integrates directly with the Android text selection popup in WhatsApp, Gmail, Chrome, Slack, and Notes.",
                     fontSize = 12.sp,
-                    lineHeight = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                // Step 1
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "1. Highlight Any Text",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Select any word, sentence, or paragraph in any messaging or browsing app.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Step 2
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "2. Look for 'Rewrite' or 'Vyasa'",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "• Rewrite: 1-tap instant proofreading that replaces your text in-place with zero lag.\n• Vyasa: Opens the interactive dock to Translate, Summarize, or Continue Writing.",
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Step 3 (Crucial Setup Tip: Manage Apps)
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "3. Don't see them? Enable in 'Manage Apps'",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "If Rewrite or Vyasa is not shown in the first bar:\n• Tap the 3 vertical dots (⋮) on the text popup toolbar.\n• Scroll down and tap 'Manage apps' or 'Customize'.\n• Turn ON / pin 'Rewrite' and 'Vyasa' so they always appear immediately on top.",
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
         }
     }

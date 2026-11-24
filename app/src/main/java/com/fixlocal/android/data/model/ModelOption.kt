@@ -16,7 +16,7 @@ enum class ModelOption(
         downloadUrl = "https://huggingface.co/saliltambe/gemma3-270m-litertlm/resolve/main/gemma3_270m_fused.litertlm",
         sizeText = "272 MB",
         expectedSizeBytes = 285577392L,
-        description = "Ultra-compact • Google's on-device 270M model"
+        description = "Fast English Specialist • Proofread, Summarize, Continue"
     ),
     QWEN3_0_6B_Q4(
         modelId = "qwen3-0.6b-q4",
@@ -25,7 +25,7 @@ enum class ModelOption(
         downloadUrl = "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm",
         sizeText = "343 MB",
         expectedSizeBytes = 343490560L,
-        description = "Recommended • Multilingual translation & high accuracy"
+        description = "Recommended Multilingual • All Features + Translation (Hindi, Tamil, Global)"
     );
 
     companion object {

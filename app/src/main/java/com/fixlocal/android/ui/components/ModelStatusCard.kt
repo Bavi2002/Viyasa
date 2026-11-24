@@ -51,9 +51,10 @@ fun ModelStatusCard(
     onOptionSelected: (ModelOption) -> Unit,
     deviceSpecs: DeviceSpecs,
     isModelCapable: (ModelOption) -> Pair<Boolean, String?>,
+    isModelDownloaded: (ModelOption) -> Boolean = { false },
     onDownloadClick: () -> Unit,
     onCancelDownloadClick: () -> Unit,
-    onDeleteClick: () -> Unit,
+    onDeleteClick: (ModelOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -178,7 +179,7 @@ fun ModelStatusCard(
                             }
 
                             OutlinedButton(
-                                onClick = onDeleteClick,
+                                onClick = { onDeleteClick(selectedOption) },
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                 colors = ButtonDefaults.outlinedButtonColors(
@@ -218,6 +219,7 @@ fun ModelStatusCard(
                             val (isCapable, _) = isModelCapable(option)
                             val isRecommended = deviceSpecs.recommendedModel == option
                             val isCurrentlyLoaded = option.fileName.equals(status.file.name, ignoreCase = true)
+                            val isDownloaded = isModelDownloaded(option)
 
                             FilterChip(
                                 selected = selectedOption == option,
@@ -251,6 +253,13 @@ fun ModelStatusCard(
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.primary
+                                            )
+                                        } else if (isDownloaded) {
+                                            Text(
+                                                text = "• Saved",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
                                             )
                                         } else if (isRecommended) {
                                             Text(
@@ -292,8 +301,15 @@ fun ModelStatusCard(
 
                     if (!selectedOption.fileName.equals(status.file.name, ignoreCase = true)) {
                         Spacer(modifier = Modifier.height(12.dp))
+                        val isTargetDownloaded = isModelDownloaded(selectedOption)
                         Button(
-                            onClick = onDownloadClick,
+                            onClick = {
+                                if (isTargetDownloaded) {
+                                    onOptionSelected(selectedOption)
+                                } else {
+                                    onDownloadClick()
+                                }
+                            },
                             enabled = isCapable,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp),
@@ -303,12 +319,18 @@ fun ModelStatusCard(
                             )
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.CloudDownload,
+                                imageVector = if (isTargetDownloaded) Icons.Outlined.CheckCircle else Icons.Outlined.CloudDownload,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Switch / Download (${selectedOption.sizeText})")
+                            Text(
+                                if (isTargetDownloaded) {
+                                    "Switch to ${selectedOption.displayName} (Instant)"
+                                } else {
+                                    "Download ${selectedOption.displayName} (${selectedOption.sizeText})"
+                                }
+                            )
                         }
                     }
                 }
@@ -462,8 +484,15 @@ fun ModelStatusCard(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    val isTargetDownloaded = isModelDownloaded(selectedOption)
                     Button(
-                        onClick = onDownloadClick,
+                        onClick = {
+                            if (isTargetDownloaded) {
+                                onOptionSelected(selectedOption)
+                            } else {
+                                onDownloadClick()
+                            }
+                        },
                         enabled = isCapable,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
@@ -473,12 +502,18 @@ fun ModelStatusCard(
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.CloudDownload,
+                            imageVector = if (isTargetDownloaded) Icons.Outlined.CheckCircle else Icons.Outlined.CloudDownload,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Download Model (${selectedOption.sizeText})")
+                        Text(
+                            if (isTargetDownloaded) {
+                                "Select ${selectedOption.displayName} (Instant)"
+                            } else {
+                                "Download Model (${selectedOption.sizeText})"
+                            }
+                        )
                     }
                 }
             }

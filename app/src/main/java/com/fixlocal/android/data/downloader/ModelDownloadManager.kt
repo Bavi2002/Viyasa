@@ -161,15 +161,35 @@ class ModelDownloadManager(
         return null
     }
 
+    fun isModelDownloaded(option: ModelOption): Boolean {
+        val checkDirs = getCandidateDirectories()
+        for (dir in checkDirs) {
+            val f = File(dir, option.fileName)
+            val minAcceptable = (option.expectedSizeBytes * 90) / 100
+            if (f.exists() && f.isFile && f.length() >= minAcceptable) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fun isAnyModelDownloaded(): Boolean {
+        return findExistingModelFile() != null
+    }
+
+    fun getDownloadedModels(): List<ModelOption> {
+        return ModelOption.entries.filter { isModelDownloaded(it) }
+    }
+
     fun getPreferredAdbPushPath(option: ModelOption): String {
         val externalModelsDir = context.getExternalFilesDir("models")
         return File(externalModelsDir, option.fileName).absolutePath
     }
 
-    fun refreshStatus() {
+    fun refreshStatus(preferredOption: ModelOption? = null) {
         if (downloadJob?.isActive == true) return
 
-        val existing = findExistingModelFile()
+        val existing = findExistingModelFile(preferredOption)
         if (existing != null) {
             val isExternal = existing.absolutePath.contains("Android/data")
             val knownOption = ModelOption.fromFileName(existing.name)
@@ -199,15 +219,30 @@ class ModelDownloadManager(
     fun startDownload(targetOption: ModelOption) {
         if (downloadJob?.isActive == true) return
 
+        // Instant switch if model is already stored locally
+        if (isModelDownloaded(targetOption)) {
+            val existing = findExistingModelFile(targetOption) ?: File(context.filesDir, targetOption.fileName)
+            val isExternal = existing.absolutePath.contains("Android/data")
+            _statusFlow.value = ModelStatus.Ready(
+                file = existing,
+                sizeBytes = existing.length(),
+                isExternal = isExternal,
+                modelName = targetOption.displayName
+            )
+            return
+        }
+
         downloadJob = scope.launch(Dispatchers.IO) {
             val targetFile = File(context.filesDir, targetOption.fileName)
             val tempFile = File(context.filesDir, "${targetOption.fileName}.tmp")
 
             try {
+                val existingBytes = if (tempFile.exists()) tempFile.length() else 0L
+
                 _statusFlow.value = ModelStatus.Downloading(
                     modelOption = targetOption,
-                    progressPercent = 0,
-                    bytesDownloaded = 0,
+                    progressPercent = if (targetOption.expectedSizeBytes > 0) ((existingBytes * 100) / targetOption.expectedSizeBytes).toInt().coerceIn(0, 99) else 0,
+                    bytesDownloaded = existingBytes,
                     totalBytes = targetOption.expectedSizeBytes
                 )
 
@@ -224,6 +259,9 @@ class ModelDownloadManager(
                         readTimeout = 30000
                         instanceFollowRedirects = false
                         setRequestProperty("User-Agent", "FixLocal-Android/1.0")
+                        if (existingBytes > 0 && existingBytes < targetOption.expectedSizeBytes) {
+                            setRequestProperty("Range", "bytes=$existingBytes-")
+                        }
                     }
 
                     val responseCode = connection.responseCode
@@ -234,7 +272,7 @@ class ModelDownloadManager(
                         connection.disconnect()
                         currentUrl = newLocation
                         redirectCount++
-                    } else if (responseCode == HttpURLConnection.HTTP_OK) {
+                    } else if (responseCode == HttpURLConnection.HTTP_OK || responseCode == 206) {
                         break
                     } else {
                         throw IllegalStateException("Server returned HTTP $responseCode")
@@ -242,13 +280,21 @@ class ModelDownloadManager(
                 }
 
                 val conn = connection ?: throw IllegalStateException("Failed to open connection")
-                val totalLength = if (conn.contentLengthLong > 0) conn.contentLengthLong else targetOption.expectedSizeBytes
+                val isResuming = (conn.responseCode == 206)
+                val appendMode = isResuming && existingBytes > 0
+                var totalBytesRead = if (appendMode) existingBytes else 0L
+                val totalLength = if (isResuming) {
+                    existingBytes + conn.contentLengthLong
+                } else if (conn.contentLengthLong > 0) {
+                    conn.contentLengthLong
+                } else {
+                    targetOption.expectedSizeBytes
+                }
 
                 conn.inputStream.use { input ->
-                    FileOutputStream(tempFile).use { output ->
+                    FileOutputStream(tempFile, appendMode).use { output ->
                         val buffer = ByteArray(64 * 1024)
                         var bytesRead: Int
-                        var totalBytesRead = 0L
                         var lastProgressUpdate = 0L
 
                         while (input.read(buffer).also { bytesRead = it } != -1) {
@@ -262,7 +308,7 @@ class ModelDownloadManager(
                             if (now - lastProgressUpdate > 250 || totalBytesRead == totalLength) {
                                 lastProgressUpdate = now
                                 val percent = if (totalLength > 0) {
-                                    ((totalBytesRead * 100) / totalLength).toInt()
+                                    ((totalBytesRead * 100) / totalLength).toInt().coerceIn(0, 100)
                                 } else 0
                                 _statusFlow.value = ModelStatus.Downloading(
                                     modelOption = targetOption,
@@ -278,7 +324,6 @@ class ModelDownloadManager(
 
                 val minAcceptable = (targetOption.expectedSizeBytes * 90) / 100
                 if (tempFile.length() < minAcceptable) {
-                    tempFile.delete()
                     throw IllegalStateException("Downloaded file is incomplete (${tempFile.length()} bytes)")
                 }
 
@@ -301,10 +346,9 @@ class ModelDownloadManager(
                     modelName = targetOption.displayName
                 )
             } catch (e: CancellationException) {
-                tempFile.delete()
-                refreshStatus()
+                // Keep partial file so user can resume without starting from 0%
+                refreshStatus(targetOption)
             } catch (e: Exception) {
-                tempFile.delete()
                 _statusFlow.value = ModelStatus.Error(e.localizedMessage ?: "Download failed")
             } finally {
                 downloadJob = null
@@ -315,25 +359,27 @@ class ModelDownloadManager(
     fun cancelDownload() {
         downloadJob?.cancel()
         downloadJob = null
-        for (option in ModelOption.entries) {
-            val tempFile = File(context.filesDir, "${option.fileName}.tmp")
-            if (tempFile.exists()) {
-                tempFile.delete()
-            }
-        }
         refreshStatus()
     }
 
-    fun deleteModel(): Boolean {
+    fun deleteModel(targetOption: ModelOption? = null): Boolean {
         cancelDownload()
         var deleted = false
         val checkDirs = getCandidateDirectories()
 
+        val filesToDelete = if (targetOption != null) {
+            listOf(targetOption.fileName, "${targetOption.fileName}.tmp")
+        } else {
+            ModelOption.entries.flatMap { listOf(it.fileName, "${it.fileName}.tmp") }
+        }
+
         for (dir in checkDirs) {
             if (dir.exists()) {
-                val files = dir.listFiles { f -> f.name.endsWith(".litertlm") || f.name.endsWith(".tmp") }
-                files?.forEach { f ->
-                    deleted = f.delete() || deleted
+                filesToDelete.forEach { fileName ->
+                    val f = File(dir, fileName)
+                    if (f.exists()) {
+                        deleted = f.delete() || deleted
+                    }
                 }
             }
         }

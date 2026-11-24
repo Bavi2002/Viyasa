@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material3.Button
@@ -48,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fixlocal.android.data.model.AssistantTask
 import com.fixlocal.android.data.model.FixResult
+import com.fixlocal.android.data.model.ModelOption
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,10 +62,13 @@ fun PlaygroundCard(
     summarizeFormat: String = "Bullets",
     result: FixResult?,
     errorMessage: String?,
+    isModelReady: Boolean = true,
+    activeModelOption: ModelOption = ModelOption.QWEN3_0_6B_Q4,
     onInputChanged: (String) -> Unit,
     onTaskSelected: (AssistantTask) -> Unit = {},
     onTranslateTargetChanged: (String) -> Unit = {},
     onSummarizeFormatChanged: (String) -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     onTestFixClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -127,84 +133,178 @@ fun PlaygroundCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Task Selector Chips
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                AssistantTask.entries.forEach { task ->
-                    val isSelected = selectedTask == task
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { onTaskSelected(task) },
-                        leadingIcon = {
+            // Prominent First-Time Setup / Download Banner if Model Not Ready
+            if (!isModelReady) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Icon(
-                                imageVector = task.icon,
+                                imageVector = Icons.Outlined.CloudDownload,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
                             )
-                        },
-                        label = {
                             Text(
-                                text = task.label,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                text = "On-Device AI Model Required",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            labelColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = MaterialTheme.colorScheme.outlineVariant,
-                            selectedBorderColor = MaterialTheme.colorScheme.primary
+                        }
+                        Text(
+                            text = "Vyasa operates 100% locally on your phone for maximum privacy. Download Gemma 3 (272 MB) or Qwen3 (343 MB) in Settings to begin.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    )
+                        Button(
+                            onClick = onNavigateToSettings,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(36.dp)
+                        ) {
+                            Text("Download Model in Settings", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
 
-            // Task Context Options
-            when (selectedTask) {
-                AssistantTask.TRANSLATE -> {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Translates to $translateTarget (configured in Settings)",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                AssistantTask.SUMMARIZE -> {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf("Bullets", "One-Liner").forEach { fmt ->
-                            val isFmtSelected = summarizeFormat == fmt
-                            Surface(
-                                onClick = { onSummarizeFormatChanged(fmt) },
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isFmtSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                                contentColor = if (isFmtSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+            // Modern 2x2 Feature Selector Layout (All features immediately visible without scrolling)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val tasks = AssistantTask.entries
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(tasks[0], tasks[1]).forEach { task ->
+                        val isSelected = selectedTask == task
+                        Surface(
+                            onClick = { onTaskSelected(task) },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Icon(
+                                    imageVector = task.icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = fmt,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isFmtSelected) FontWeight.Bold else FontWeight.Normal,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    text = task.label,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                             }
                         }
                     }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(tasks[2], tasks[3]).forEach { task ->
+                        val isSelected = selectedTask == task
+                        Surface(
+                            onClick = { onTaskSelected(task) },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = task.icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = task.label,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Task Context Info
+            when (selectedTask) {
+                AssistantTask.TRANSLATE -> {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "Translates to $translateTarget (configured in Settings)",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (activeModelOption == ModelOption.GEMMA3_270M) {
+                            Text(
+                                text = "Note: Gemma 3 is optimized for English tasks. Qwen3 is recommended for multilingual translation.",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                AssistantTask.SUMMARIZE -> {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Format: $summarizeFormat (configured in Settings)",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 else -> {}
             }
@@ -281,8 +381,14 @@ fun PlaygroundCard(
             }
 
             Button(
-                onClick = onTestFixClick,
-                enabled = !isRunning && inputText.isNotBlank(),
+                onClick = {
+                    if (!isModelReady) {
+                        onNavigateToSettings()
+                    } else {
+                        onTestFixClick()
+                    }
+                },
+                enabled = !isRunning && (inputText.isNotBlank() || !isModelReady),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -298,6 +404,14 @@ fun PlaygroundCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Processing on device...", fontSize = 13.sp)
+                } else if (!isModelReady) {
+                    Icon(
+                        imageVector = Icons.Outlined.CloudDownload,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Download AI Model in Settings", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 } else {
                     Icon(
                         imageVector = selectedTask.icon,

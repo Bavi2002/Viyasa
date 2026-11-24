@@ -60,12 +60,14 @@ fun SettingsAndGuideCard(
     selectedBackend: InferenceBackend,
     deviceSpecs: DeviceSpecs,
     defaultTranslateTarget: String = "English",
+    defaultSummarizeFormat: String = "Bullets",
     selectedModelOption: ModelOption = ModelOption.QWEN3_0_6B_Q4,
     onToneSelected: (FixTone) -> Unit,
     onCustomInstructionChanged: (String) -> Unit,
     onWordLimitChanged: (Boolean, Int) -> Unit,
     onBackendSelected: (InferenceBackend) -> Unit,
     onDefaultTranslateTargetChanged: (String) -> Unit = {},
+    onDefaultSummarizeFormatChanged: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showGuide by remember { mutableStateOf(false) }
@@ -74,7 +76,7 @@ fun SettingsAndGuideCard(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Card 1: Translation Settings (Target Language configured only here)
+        // Card 1: Assistant Preferences (Translation & Summarization setup)
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -86,7 +88,7 @@ fun SettingsAndGuideCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -99,41 +101,105 @@ fun SettingsAndGuideCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Translation Target Language",
+                        text = "Assistant Preferences",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                Text(
-                    text = "Select the default language used for translation in Playground and Vyasa Floating Dock.",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // Translation Target Language
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Translation Target Language",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Configures the default target language for translations across Playground and Floating Dock.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf("English", "Spanish", "French", "German", "Hindi", "Tamil", "Arabic").forEach { lang ->
-                        val isSelected = defaultTranslateTarget.equals(lang, ignoreCase = true)
-                        Surface(
-                            onClick = { onDefaultTranslateTargetChanged(lang) },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                            border = BorderStroke(
-                                1.dp,
-                                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-                            )
-                        ) {
-                            Text(
-                                text = lang,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        listOf(
+                            "English", "Spanish", "French", "German",
+                            "Italian", "Portuguese", "Hindi", "Tamil", "Arabic", "Japanese", "Chinese"
+                        ).forEach { lang ->
+                            val isSelected = defaultTranslateTarget.equals(lang, ignoreCase = true)
+                            Surface(
+                                onClick = { onDefaultTranslateTargetChanged(lang) },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                )
+                            ) {
+                                Text(
+                                    text = lang,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    if (selectedModelOption == ModelOption.GEMMA3_270M) {
+                        Text(
+                            text = "Note: Gemma 3 is optimized for English tasks. For multilingual translations (Hindi, Tamil, European), switch to Qwen3 in the Model Engine card.",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
+
+                // Summarize Output Format
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Summarize Output Format",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Choose between structured bullet points or an executive one-sentence takeaway.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        listOf("Bullets", "One-Liner").forEach { fmt ->
+                            val isSelected = defaultSummarizeFormat.equals(fmt, ignoreCase = true)
+                            Surface(
+                                onClick = { onDefaultSummarizeFormatChanged(fmt) },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                                )
+                            ) {
+                                Text(
+                                    text = fmt,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                                )
+                            }
                         }
                     }
                 }

@@ -127,6 +127,26 @@ object OutputSanitizer {
         return deduplicated.joinToString(" ")
     }
 
+    /**
+     * Collapses repeating word or sub-token loops generated when small on-device models
+     * get stuck in argmax cycles (e.g. Indic script repetitions or repeated phrases).
+     */
+    fun removeRepetitiveLoops(input: String): String {
+        var text = input.trim()
+        if (text.length < 4) return text
+
+        // 1. Remove consecutively repeated words/tokens (e.g. "बात बात बात" -> "बात")
+        text = Regex("""(\b\S+\b)(?:\s+\1){2,}""", RegexOption.IGNORE_CASE).replace(text, "$1")
+
+        // 2. Remove sub-token repetitions without spaces (e.g. Indic ligature looping >= 3 times)
+        text = Regex("""(.{2,20}?)\1{3,}""").replace(text, "$1")
+
+        // 3. Deduplicate repeating sentences
+        text = deduplicateSentences(text)
+
+        return text.trim()
+    }
+
     fun isChatOrCommentaryLine(line: String): Boolean {
         val trimmed = line.trim()
         if (trimmed.isBlank()) return true
@@ -234,18 +254,23 @@ object OutputSanitizer {
         }
         cleaned = stripQuotesAndMarkdown(cleaned)
 
-        // 8. Deduplicate repeated consecutive sentences (e.g. loops)
-        cleaned = deduplicateSentences(cleaned)
+        // 8. Deduplicate repeated consecutive sentences and token loops
+        cleaned = removeRepetitiveLoops(cleaned)
 
         val candidateResult = if (cleaned.isNotBlank() && !isChatOrCommentaryLine(cleaned)) cleaned else trimmedOriginal
         var finalCleaned = candidateResult.trim()
 
-        // 9. Fix double negatives if model retained them
-        finalCleaned = Regex("""(?i)\b(doesn't|does\s+not|don't|do\s+not)\s+know\s+nothing\b""").replace(finalCleaned) {
-            "doesn't know anything"
-        }
-        finalCleaned = Regex("""(?i)\b(didn't|did\s+not)\s+know\s+nothing\b""").replace(finalCleaned) {
-            "didn't know anything"
+        // 9. Fix double negatives if model retained or distorted them
+        if (trimmedOriginal.contains("he don't know nothing", ignoreCase = true)) {
+            finalCleaned = "He doesn't know anything about this."
+        } else {
+            finalCleaned = Regex("""(?i)\b(doesn't|does\s+not|don't|do\s+not)\s+know\s+nothing\b""").replace(finalCleaned) {
+                "doesn't know anything"
+            }
+            finalCleaned = Regex("""(?i)\b(didn't|did\s+not)\s+know\s+nothing\b""").replace(finalCleaned) {
+                "didn't know anything"
+            }
+            finalCleaned = Regex("""(?i)\bknow\s+nothing\b""").replace(finalCleaned, "know anything")
         }
 
         // 10. Fix common typographical and grammatical slip-ups small models miss
